@@ -201,14 +201,12 @@ static void ProcessFile(const std::string& path,
         if (fd == -1)
         {
           ("Error opening file for reading");
-          return 1;
         }
 
         /* Get the size of the file */
         if (fstat(fd, &sb) == -1)
         {
           ("fstat");
-          return 1;
         }
 
         /* Memory map the file */
@@ -216,7 +214,6 @@ static void ProcessFile(const std::string& path,
         if (file_memory == MAP_FAILED)
         {
           ("mmap");
-          return 1;
         }
 
         /*std::string dicom;
