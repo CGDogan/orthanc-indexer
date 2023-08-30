@@ -489,7 +489,6 @@ if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
       ${ORTHANC_FRAMEWORK_ROOT}/..
       /usr/include/jsoncpp
       /usr/local/include/jsoncpp
-      /opt/homebrew/Cellar/jsoncpp/1.9.5/include
       )
   endif()
 
