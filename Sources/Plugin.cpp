@@ -22,6 +22,11 @@
 
 #include "../Resources/Orthanc/Plugins/OrthancPluginCppWrapper.h"
 
+#include <dcmtk/dcmdata/dctk.h>
+#include <dcmtk/dcmdata/dcrledrg.h>
+#include <dcmtk/dcmdata/dcitem.h>
+#include <dcmtk/dcmdata/dcistrmb.h>
+
 #include <DicomFormat/DicomInstanceHasher.h>
 #include <DicomFormat/DicomMap.h>
 #include <Logging.h>
@@ -31,6 +36,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/thread.hpp>
 #include <stack>
+#include <string>
 
 
 static std::list<std::string>        folders_;
@@ -40,48 +46,101 @@ static unsigned int                  intervalSeconds_;
 
 
 static bool ComputeInstanceId(std::string& instanceId,
-                              const void* dicom,
-                              size_t size)
+                              DcmFileFormat& fileFormat)
 {
-  if (size > 0 &&
-      Orthanc::DicomMap::IsDicomFile(dicom, size))
+  try
   {
-    try
-    {
-      OrthancPlugins::OrthancString s;
-      s.Assign(OrthancPluginDicomBufferToJson(OrthancPlugins::GetGlobalContext(), dicom, size,
-                                              OrthancPluginDicomToJsonFormat_Short,
-                                              OrthancPluginDicomToJsonFlags_None, 256));
-    
-      Json::Value json;
-      s.ToJson(json);
-    
-      static const char* const PATIENT_ID = "0010,0020";
-      static const char* const STUDY_INSTANCE_UID = "0020,000d";
-      static const char* const SERIES_INSTANCE_UID = "0020,000e";
-      static const char* const SOP_INSTANCE_UID = "0008,0018";
-    
-      Orthanc::DicomInstanceHasher hasher(
-        json.isMember(PATIENT_ID) ? Orthanc::SerializationToolbox::ReadString(json, PATIENT_ID) : "",
-        Orthanc::SerializationToolbox::ReadString(json, STUDY_INSTANCE_UID),
-        Orthanc::SerializationToolbox::ReadString(json, SERIES_INSTANCE_UID),
-        Orthanc::SerializationToolbox::ReadString(json, SOP_INSTANCE_UID));
+    DcmDataset *dataset = fileFormat.getDataset();
 
-      instanceId = hasher.HashInstance();
-      return true;
-    }
-    catch (Orthanc::OrthancException&)
+    static const DcmTagKey PATIENT_ID(DCM_PatientID);
+    static const DcmTagKey STUDY_INSTANCE_UID(DCM_StudyInstanceUID);
+    static const DcmTagKey SERIES_INSTANCE_UID(DCM_SeriesInstanceUID);
+    static const DcmTagKey SOP_INSTANCE_UID(DCM_SOPInstanceUID);
+
+    Uint32 PATIENT_ID_len = (Uint32)-1;
+    Uint32 STUDY_INSTANCE_UID_len = (Uint32)-1;
+    Uint32 SERIES_INSTANCE_UID_len = (Uint32)-1;
+    Uint32 SOP_INSTANCE_UID_len = (Uint32)-1;
+
+    const char *PATIENT_ID_ptr;
+    const char *STUDY_INSTANCE_UID_ptr;
+    const char *SERIES_INSTANCE_UID_ptr;
+    const char *SOP_INSTANCE_UID_ptr;
+
+    OFCondition code1 = dataset->findAndGetString(PATIENT_ID, PATIENT_ID_ptr, PATIENT_ID_len, OFTrue);
+    OFCondition code2 = dataset->findAndGetString(STUDY_INSTANCE_UID, STUDY_INSTANCE_UID_ptr, STUDY_INSTANCE_UID_len);
+    OFCondition code3 = dataset->findAndGetString(SERIES_INSTANCE_UID, SERIES_INSTANCE_UID_ptr, SERIES_INSTANCE_UID_len);
+    OFCondition code4 = dataset->findAndGetString(SOP_INSTANCE_UID, SOP_INSTANCE_UID_ptr, SOP_INSTANCE_UID_len);
+
+    if (code2.bad() || code3.bad() || code4.bad())
     {
       return false;
     }
+
+    if (code1.bad())
+    {
+      PATIENT_ID_ptr = NULL;
+      PATIENT_ID_len = 0;
+    }
+
+    std::string PATIENT_ID_str(PATIENT_ID_ptr, PATIENT_ID_len);
+    std::string STUDY_INSTANCE_UID_str(STUDY_INSTANCE_UID_ptr, STUDY_INSTANCE_UID_len);
+    std::string SERIES_INSTANCE_UID_str(SERIES_INSTANCE_UID_ptr, SERIES_INSTANCE_UID_len);
+    std::string SOP_INSTANCE_UID_str(SOP_INSTANCE_UID_ptr, SOP_INSTANCE_UID_len);
+
+    Orthanc::DicomInstanceHasher hasher(
+      PATIENT_ID_str,
+      STUDY_INSTANCE_UID_str,
+      SERIES_INSTANCE_UID_str,
+      SOP_INSTANCE_UID_str);
+
+    instanceId = hasher.HashInstance();
+    return true;
   }
-  else
+  catch (Orthanc::OrthancException &)
   {
     return false;
   }
 }
 
+static bool ComputeInstanceId(std::string& instanceId,
+                              const std::string& path)
+{
+  int pathLen = path.size();
+  if (pathLen == 0) {
+    return false;
+  }
 
+  DcmFileFormat fileFormat;
+  OFFilename filename(OFString(&path[0], pathLen));
+
+  if (fileFormat.loadFile(filename).bad())
+  {
+    return false;
+  }
+  return ComputeInstanceId(instanceId, fileFormat);
+}
+
+static bool ComputeInstanceId(std::string& instanceId,
+                              const char *contents,
+                              const uintmax_t size)
+{
+  DcmInputBufferStream is;
+  if (size > 0)
+  {
+    is.setBuffer(contents, size);
+  }
+  is.setEos();
+
+  DcmFileFormat fileFormat;
+  fileFormat.transferInit();
+  if (fileFormat.read(is, EXS_Unknown, EGL_noChange, size).bad())
+  {
+    return false;
+  }
+  fileFormat.transferEnd();
+  return ComputeInstanceId(instanceId, fileFormat);
+}
 
 static void ProcessFile(const std::string& path,
                         const std::time_t time,
@@ -98,12 +157,9 @@ static void ProcessFile(const std::string& path,
       database_.RemoveFile(path);
     }
     
-    std::string dicom;
-    Orthanc::SystemToolbox::ReadFile(dicom, path);
-
     std::string instanceId;
-    if (!dicom.empty() &&
-        ComputeInstanceId(instanceId, dicom.c_str(), dicom.size()))
+    if (!path.empty() &&
+        ComputeInstanceId(instanceId, path))
     {
       LOG(INFO) << "New DICOM file detected by the indexer plugin: " << path;
 
@@ -119,6 +175,9 @@ static void ProcessFile(const std::string& path,
     
       try
       {
+        std::string dicom;
+        Orthanc::SystemToolbox::ReadFile(dicom, path);
+
         Json::Value upload;
         OrthancPlugins::RestApiPost(upload, "/instances", dicom, false);
       }
@@ -287,9 +346,11 @@ static OrthancPluginErrorCode StorageCreate(const char *uuid,
   try
   {
     std::string instanceId;
-    if (type == OrthancPluginContentType_Dicom &&
+    // TODO: comment IA, change ot path IA
+    /*if (type == OrthancPluginContentType_Dicom &&
         ComputeInstanceId(instanceId, content, size) &&
-        database_.AddAttachment(uuid, instanceId))
+        database_.AddAttachment(uuid, instanceId))*/
+    if (1)
     {
       // This attachment corresponds to an external DICOM file that is
       // stored in one of the indexed folders, only store a link to it
