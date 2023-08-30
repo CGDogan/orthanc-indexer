@@ -38,14 +38,6 @@
 #include <stack>
 #include <string>
 
-#include <stdio.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include <stdio.h>
 
 static std::list<std::string>        folders_;
 static IndexerDatabase               database_;
@@ -56,8 +48,6 @@ static unsigned int                  intervalSeconds_;
 static bool ComputeInstanceId(std::string& instanceId,
                               DcmFileFormat& fileFormat)
 {
-  __builtin_fprintf(stderr, "ciidbgn1\n");
-
   try
   {
     DcmDataset *dataset = fileFormat.getDataset();
@@ -113,11 +103,9 @@ static bool ComputeInstanceId(std::string& instanceId,
   }
 }
 
-static bool ComputeInstanceId(std::string &instanceId,
-                              const std::string &path)
+static bool ComputeInstanceId(std::string& instanceId,
+                              const std::string& path)
 {
-  __builtin_fprintf(stderr, "ciidbgn2\n");
-
   int pathLen = path.size();
   if (pathLen == 0) {
     return false;
@@ -137,8 +125,6 @@ static bool ComputeInstanceId(std::string& instanceId,
                               const char *contents,
                               const uintmax_t size)
 {
-  __builtin_fprintf(stderr, "ciidbgn3\n");
-
   DcmInputBufferStream is;
   if (size > 0)
   {
@@ -160,8 +146,6 @@ static void ProcessFile(const std::string& path,
                         const std::time_t time,
                         const uintmax_t size)
 {
-  __builtin_fprintf(stderr, "ProcessFilebgn\n");
-
   std::string oldInstanceId;
   IndexerDatabase::FileStatus status = database_.LookupFile(oldInstanceId, path, time, size);
 
@@ -191,38 +175,11 @@ static void ProcessFile(const std::string& path,
     
       try
       {
-
-        int fd;
-        void *file_memory;
-        struct stat sb;
-
-        /* Open the file */
-        fd = open(path.c_str(), O_RDONLY);
-        if (fd == -1)
-        {
-          ("Error opening file for reading");
-        }
-
-        /* Get the size of the file */
-        if (fstat(fd, &sb) == -1)
-        {
-          ("fstat");
-        }
-
-        /* Memory map the file */
-        file_memory = mmap(0, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-        if (file_memory == MAP_FAILED)
-        {
-          ("mmap");
-        }
-
-        Json::Value upload;
         std::string dicom;
         Orthanc::SystemToolbox::ReadFile(dicom, path);
-        OrthancPlugins::RestApiPost(upload, "/instances", dicom, false);
 
-        /*
-        OrthancPlugins::RestApiPost(upload, "/instances", (const void *)file_memory, (size_t)sb.st_size, false);*/
+        Json::Value upload;
+        OrthancPlugins::RestApiPost(upload, "/instances", dicom, false);
       }
       catch (Orthanc::OrthancException&)
       {
@@ -386,8 +343,6 @@ static OrthancPluginErrorCode StorageCreate(const char *uuid,
                                             int64_t size,
                                             OrthancPluginContentType type)
 {
-  __builtin_fprintf(stderr, "Storagercreatebgn\n");
-
   try
   {
     std::string instanceId;
@@ -395,18 +350,13 @@ static OrthancPluginErrorCode StorageCreate(const char *uuid,
         ComputeInstanceId(instanceId, static_cast<const char*>(content), size) &&
         database_.AddAttachment(uuid, instanceId))
     {
-      __builtin_fprintf(stderr, "Storagercreateend\n");
-
       // This attachment corresponds to an external DICOM file that is
       // stored in one of the indexed folders, only store a link to it
     }
     else
     {
-      __builtin_fprintf(stderr, "Storagercreateend2\n");
-
       // This attachment must be stored in the internal storage area
       storageArea_->Create(uuid, content, size);
-      __builtin_fprintf(stderr, "Storagercreateend3\n");
     }
     
     return OrthancPluginErrorCode_Success;
@@ -420,7 +370,6 @@ static OrthancPluginErrorCode StorageCreate(const char *uuid,
   {
     return OrthancPluginErrorCode_InternalError;
   }
-  __builtin_fprintf(stderr, "Storagercreateend\n");
 }
 
 
@@ -439,8 +388,6 @@ static OrthancPluginErrorCode StorageReadRange(OrthancPluginMemoryBuffer64 *targ
                                                OrthancPluginContentType type,
                                                uint64_t rangeStart)
 {
-  __builtin_fprintf(stderr, "Storagerrnbgn\n");
-
   try
   {
     std::string externalPath;
@@ -464,7 +411,6 @@ static OrthancPluginErrorCode StorageReadRange(OrthancPluginMemoryBuffer64 *targ
   {
     return OrthancPluginErrorCode_InternalError;
   }
-  __builtin_fprintf(stderr, "Storagerrnend\n");
 }
 
 
@@ -472,7 +418,6 @@ static OrthancPluginErrorCode StorageReadWhole(OrthancPluginMemoryBuffer64 *targ
                                                const char *uuid,
                                                OrthancPluginContentType type)
 {
-  __builtin_fprintf(stderr, "StorageReadWholebgn\n");
   try
   {
     std::string externalPath;
@@ -496,7 +441,6 @@ static OrthancPluginErrorCode StorageReadWhole(OrthancPluginMemoryBuffer64 *targ
   {
     return OrthancPluginErrorCode_InternalError;
   }
-  __builtin_fprintf(stderr, "StorageReadWholeend\n");
 }
 
 
