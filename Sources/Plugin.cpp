@@ -40,6 +40,12 @@
 
 #include <stdio.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/mman.h>
+#include <stdio.h>
 
 static std::list<std::string>        folders_;
 static IndexerDatabase               database_;
@@ -185,11 +191,39 @@ static void ProcessFile(const std::string& path,
     
       try
       {
-        std::string dicom;
-        Orthanc::SystemToolbox::ReadFile(dicom, path);
+
+        int fd;
+        void *file_memory;
+        struct stat sb;
+
+        /* Open the file */
+        fd = open(path.c_str(), O_RDONLY);
+        if (fd == -1)
+        {
+          ("Error opening file for reading");
+          return 1;
+        }
+
+        /* Get the size of the file */
+        if (fstat(fd, &sb) == -1)
+        {
+          ("fstat");
+          return 1;
+        }
+
+        /* Memory map the file */
+        file_memory = mmap(0, sb.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+        if (file_memory == MAP_FAILED)
+        {
+          ("mmap");
+          return 1;
+        }
+
+        /*std::string dicom;
+        Orthanc::SystemToolbox::ReadFile(dicom, path);*/
 
         Json::Value upload;
-        OrthancPlugins::RestApiPost(upload, "/instances", dicom, false);
+        OrthancPlugins::RestApiPost(upload, "/instances", file_memory, sb.st_size, false);
       }
       catch (Orthanc::OrthancException&)
       {
