@@ -346,11 +346,9 @@ static OrthancPluginErrorCode StorageCreate(const char *uuid,
   try
   {
     std::string instanceId;
-    // TODO: comment IA, change ot path IA
-    /*if (type == OrthancPluginContentType_Dicom &&
+    if (type == OrthancPluginContentType_Dicom &&
         ComputeInstanceId(instanceId, content, size) &&
-        database_.AddAttachment(uuid, instanceId))*/
-    if (1)
+        database_.AddAttachment(uuid, instanceId))
     {
       // This attachment corresponds to an external DICOM file that is
       // stored in one of the indexed folders, only store a link to it
