@@ -217,9 +217,9 @@ static void ProcessFile(const std::string& path,
         }
 
         Json::Value upload;
-        std::string dicom;
+        /*std::string dicom;
         Orthanc::SystemToolbox::ReadFile(dicom, path);
-        OrthancPlugins::RestApiPost(upload, "/instances", dicom, false);
+        OrthancPlugins::RestApiPost(upload, "/instances", dicom, false);*/
 
         /*
         OrthancPlugins::RestApiPost(upload, "/instances", (const void *)file_memory, (size_t)sb.st_size, false);*/
