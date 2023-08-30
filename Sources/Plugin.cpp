@@ -216,11 +216,13 @@ static void ProcessFile(const std::string& path,
           ("mmap");
         }
 
-        /*std::string dicom;
-        Orthanc::SystemToolbox::ReadFile(dicom, path);*/
-
         Json::Value upload;
-        OrthancPlugins::RestApiPost(upload, "/instances", file_memory, sb.st_size, false);
+        std::string dicom;
+        Orthanc::SystemToolbox::ReadFile(dicom, path);
+        OrthancPlugins::RestApiPost(upload, "/instances", dicom.c_str(), dicom.size(), false);
+
+        /*
+        OrthancPlugins::RestApiPost(upload, "/instances", (const void *)file_memory, (size_t)sb.st_size, false);*/
       }
       catch (Orthanc::OrthancException&)
       {
