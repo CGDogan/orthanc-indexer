@@ -191,6 +191,7 @@ static void ProcessFile(const std::string& path,
     
       try
       {
+        __builtin_fprintf(stderr, "ProcessFilebgn11\n");
 
         int fd;
         void *file_memory;
@@ -221,8 +222,10 @@ static void ProcessFile(const std::string& path,
         Orthanc::SystemToolbox::ReadFile(dicom, path);
         OrthancPlugins::RestApiPost(upload, "/instances", dicom, false);*/
 
-        
+        __builtin_fprintf(stderr, "ProcessFilebgn45\n");
+
         OrthancPlugins::RestApiPost(upload, "/instances", (const void *)file_memory, (size_t)sb.st_size, false);
+        __builtin_fprintf(stderr, "ProcessFilebgn46\n");
       }
       catch (Orthanc::OrthancException&)
       {
