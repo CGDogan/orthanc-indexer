@@ -18,11 +18,13 @@
 
 #include "FileMemoryMap.h"
 #include <boost/iostreams/device/mapped_file.hpp>
+#include <boost/exception/diagnostic_information.hpp>
 #include <string>
 #include <stdlib.h>
 
 #include "../Resources/Orthanc/Plugins/OrthancPluginCppWrapper.h"
 #include <SystemToolbox.h>
+#include <Logging.h>
 
 int FileMemoryMap::alignment = boost::iostreams::mapped_file::alignment();
 
@@ -50,9 +52,7 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
   }
   catch (const boost::exception &e)
   {
-    __builtin_printf("failed opening map\n");
-
-    (void)e;
+    LOG(INFO) << "Failed mapping file. Exception: " << boost::diagnostic_information(e);
     using_mapping = false;
 
     Orthanc::SystemToolbox::ReadFile(non_mapped_data, location);
