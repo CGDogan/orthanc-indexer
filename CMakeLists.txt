@@ -81,7 +81,7 @@ else()
   include_directories(${ORTHANC_FRAMEWORK_ROOT})
 endif()
 
-link_libraries(iostreams)
+link_libraries(lboost_iostreams)
 
 include(${CMAKE_SOURCE_DIR}/Resources/Orthanc/Plugins/OrthancPluginsExports.cmake)
 
