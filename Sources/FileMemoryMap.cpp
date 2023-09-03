@@ -43,7 +43,7 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
 
     // Success: use Boost mapping
     using_mapping = true;
-    size = mapped_data.size() - reserve_for_padding_offset;
+    data_length = mapped_data.size() - reserve_for_padding_offset;
   }
   catch (const boost::exception &e)
   {
@@ -64,7 +64,7 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
       char *high = &non_mapped_data[length];
     }
     non_mapped_data = std::string(low, high);
-    size = high - low;
+    data_length = high - low;
   }
 }
 
@@ -82,7 +82,7 @@ char *FileMemoryMap::data()
 
 uintmax_t readable_length()
 {
-  return size;
+  return data_length;
 }
 
 FileMemoryMap::~FileMemoryMap()

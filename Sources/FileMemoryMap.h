@@ -38,7 +38,7 @@ public:
 private:
   static int alignment;
   int reserve_for_padding_offset;
-  uintmax_t size;
+  uintmax_t data_length;
 
   bool using_mapping;
   boost::iostreams::mapped_file_sink mapped_data;
