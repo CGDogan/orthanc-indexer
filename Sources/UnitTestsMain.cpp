@@ -38,10 +38,10 @@ TEST(StorageArea, Basic)
   area.Create(uuid, "Hello", 5);
   ASSERT_TRUE(Orthanc::SystemToolbox::IsRegularFile(area.GetPath(uuid)));
 
-  std::string s;
-  area.ReadWhole(s, uuid);
-  ASSERT_EQ(5u, s.size());
-  ASSERT_EQ("Hello", s);
+  OrthancPluginMemoryBuffer64 s;
+  area.ReadWhole(&s, uuid);
+  ASSERT_EQ(5u, s.size);
+  ASSERT_EQ("Hello", s.data);
 
   char data[10];
   OrthancPluginMemoryBuffer64 buffer;
