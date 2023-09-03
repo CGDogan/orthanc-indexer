@@ -40,14 +40,18 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
 
   try
   {
+    __builtin_printf("trying opening map\n");
     mapped_data.open(params);
 
     // Success: use Boost mapping
     using_mapping = true;
     data_length = mapped_data.size() - reserve_for_padding_offset;
+    __builtin_printf("succeeded opening map\n");
   }
   catch (const boost::exception &e)
   {
+    __builtin_printf("failed opening map\n");
+
     (void)e;
     using_mapping = false;
 
