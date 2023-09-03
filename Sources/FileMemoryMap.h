@@ -36,7 +36,7 @@ public:
   ~FileMemoryMap();
 
 private:
-  static int aligment;
+  static int alignment;
   int reserve_for_padding_offset;
   uintmax_t length;
 
