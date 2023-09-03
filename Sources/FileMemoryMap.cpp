@@ -21,6 +21,8 @@
 #include <string>
 #include <stdlib.h>
 
+#include "../Resources/Orthanc/Plugins/OrthancPluginCppWrapper.h"
+
 int FileMemoryMap::alignment = boost::iostreams::mapped_file::alignment();
 
 FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uintmax_t length)
@@ -41,7 +43,7 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
 
     // Success: use Boost mapping
     using_mapping = true;
-    ::length = mapped_data.size() - reserve_for_padding_offset;
+    size = mapped_data.size() - reserve_for_padding_offset;
   }
   catch (const boost::exception &e)
   {
@@ -62,7 +64,7 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
       char *high = &non_mapped_data[length];
     }
     non_mapped_data = std::string(low, high);
-    ::length = high - low;
+    size = high - low;
   }
 }
 
@@ -80,7 +82,7 @@ char *FileMemoryMap::data()
 
 uintmax_t readable_length()
 {
-  return readable_length;
+  return size;
 }
 
 FileMemoryMap::~FileMemoryMap()
