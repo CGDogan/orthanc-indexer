@@ -72,6 +72,7 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
     data_length = high - low;
     non_mapped_data = std::string(non_mapped_data, data_length);
   }
+  __builtin_printf("returning from constructor\n");
 }
 
 char *FileMemoryMap::data()
