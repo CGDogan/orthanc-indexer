@@ -82,7 +82,14 @@ char *FileMemoryMap::data()
   }
   else
   {
-    __builtin_printf("accessing  ... %d", non_mapped_data[1]);
+    __builtin_printf("accessing  ...\n");
+
+    __builtin_printf("accessing  ... %d\n", non_mapped_data[1]);
+    volatile unsigned char a = 0;
+    for (int i = 0; i < data_length; i++)
+      a += non_mapped_data[i];
+       __builtin_printf("accessed\n");
+
     return const_cast<char*>(&non_mapped_data[0]);
   }
 }
