@@ -33,7 +33,7 @@ public:
   // 1) "length" was 0 (constructor deduces length)
   // 2) offset + length is greater than file size
   uintmax_t readable_length();
-  void ~FileMemoryMap();
+  ~FileMemoryMap();
 
 private:
   static int aligment;

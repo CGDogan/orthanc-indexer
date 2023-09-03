@@ -21,7 +21,7 @@
 #include <string>
 #include <stdlib.h>
 
-FileMemoryMap::alignment = boost::iostreams::mapped_file::alignment();
+int FileMemoryMap::alignment = boost::iostreams::mapped_file::alignment();
 
 FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uintmax_t length)
 {
@@ -84,7 +84,7 @@ uintmax_t readable_length()
   return readable_length;
 }
 
-void FileMemoryMap::~FileMemoryMap()
+FileMemoryMap::~FileMemoryMap()
 {
   if (using_mapping)
   {
