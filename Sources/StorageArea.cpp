@@ -18,7 +18,6 @@
 
 
 #include "StorageArea.h"
-#include "FileMemoryMap.h"
 
 #include "../Resources/Orthanc/Plugins/OrthancPluginCppWrapper.h"
 
@@ -52,19 +51,18 @@ static boost::filesystem::path GetPathInternal(const std::string& root,
 
 
 static void CreateOrthancBuffer(OrthancPluginMemoryBuffer64 *target,
-                                const char *data,
-                                uintmax_t length)
+                                const std::string& content)
 {
   OrthancPluginErrorCode code = OrthancPluginCreateMemoryBuffer64(
-      OrthancPlugins::GetGlobalContext(), target, length);
-
+    OrthancPlugins::GetGlobalContext(), target, content.size());
+    
   if (code == OrthancPluginErrorCode_Success)
   {
-    assert(length == target->size);
+    assert(content.size() == target->size);
 
-    if (length == 0)
+    if (!content.empty())
     {
-      memcpy(target->data, data, length);
+      memcpy(target->data, content.c_str(), content.size());
     }
   }
   else
@@ -77,8 +75,9 @@ static void CreateOrthancBuffer(OrthancPluginMemoryBuffer64 *target,
 void StorageArea::ReadWholeFromPath(OrthancPluginMemoryBuffer64 *target,
                                     const std::string& path)
 {
-  FileMemoryMap reader = FileMemoryMap(path);
-  CreateOrthancBuffer(target, reader.data(), reader.readable_length());
+  std::string content;
+  Orthanc::SystemToolbox::ReadFile(content, path);
+  CreateOrthancBuffer(target, content);
 }   
   
 
@@ -86,14 +85,17 @@ void StorageArea::ReadRangeFromPath(OrthancPluginMemoryBuffer64 *target,
                                     const std::string& path,
                                     uint64_t rangeStart)
 {
-  FileMemoryMap reader = FileMemoryMap(path, rangeStart, rangeStart + target->size);
-  if (reader.readable_length() != target->size)
+  std::string content;
+  Orthanc::SystemToolbox::ReadFileRange(
+    content, path, rangeStart, rangeStart + target->size, true);
+
+  if (content.size() != target->size)
   {
     throw Orthanc::OrthancException(Orthanc::ErrorCode_CorruptedFile);
   }
-  else if (reader.readable_length() != 0)
+  else if (!content.empty())
   {
-    memcpy(target->data, reader.data(), reader.readable_length());
+    memcpy(target->data, content.c_str(), content.size());
   }
 }
 
@@ -130,6 +132,13 @@ void StorageArea::Create(const std::string& uuid,
   }
       
   Orthanc::SystemToolbox::WriteFile(content, size, path.string(), false);
+}
+
+
+void StorageArea::ReadWhole(std::string& target,
+                            const std::string& uuid)
+{
+  Orthanc::SystemToolbox::ReadFile(target, GetPath(uuid));
 }
   
 

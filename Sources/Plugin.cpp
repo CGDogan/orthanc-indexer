@@ -19,7 +19,6 @@
 
 #include "IndexerDatabase.h"
 #include "StorageArea.h"
-#include "FileMemoryMap.h"
 
 #include "../Resources/Orthanc/Plugins/OrthancPluginCppWrapper.h"
 
@@ -98,12 +97,13 @@ static void ProcessFile(const std::string& path,
     {
       database_.RemoveFile(path);
     }
-
-    FileMemoryMap reader = FileMemoryMap(path);
+    
+    std::string dicom;
+    Orthanc::SystemToolbox::ReadFile(dicom, path);
 
     std::string instanceId;
-    if ((reader.readable_length() != 0) &&
-        ComputeInstanceId(instanceId, reader.data(), reader.readable_length()))
+    if (!dicom.empty() &&
+        ComputeInstanceId(instanceId, dicom.c_str(), dicom.size()))
     {
       LOG(INFO) << "New DICOM file detected by the indexer plugin: " << path;
 
@@ -120,7 +120,7 @@ static void ProcessFile(const std::string& path,
       try
       {
         Json::Value upload;
-        OrthancPlugins::RestApiPost(upload, "/instances", reader.data(), reader.readable_length(), false);
+        OrthancPlugins::RestApiPost(upload, "/instances", dicom, false);
       }
       catch (Orthanc::OrthancException&)
       {
