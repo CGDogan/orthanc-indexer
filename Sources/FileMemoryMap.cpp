@@ -32,7 +32,7 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
 {
   boost::iostreams::mapped_file_params params;
   params.path = location.c_str();
-  params.flags = boost::iostreams::mapped_file::priv;
+  // not for source: params.flags = boost::iostreams::mapped_file::priv;
 
   // offset must be a multiple of alignment.
   // reserve_for_padding_offset in range [0, alignment)

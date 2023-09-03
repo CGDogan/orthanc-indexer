@@ -20,7 +20,7 @@
 #include <boost/iostreams/device/mapped_file.hpp>
 
 // Currently uses "mapped_file_source" which is read-only.
-// The array can be modified and changes won't be saved to the file.
+// For in-memory-only modifications, consider switching to "mapped_file"
 class FileMemoryMap : public boost::noncopyable
 {
 public:
