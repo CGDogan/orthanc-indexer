@@ -82,6 +82,7 @@ char *FileMemoryMap::data()
   }
   else
   {
+    __builtin_printf("accessing  ... %d", on_mapped_data[1]);
     return const_cast<char*>(&non_mapped_data[0]);
   }
 }
