@@ -56,11 +56,11 @@ if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
     if (NOT Boost_FOUND)
       message(FATAL_ERROR "Unable to locate Boost on this system")
     endif()
-    message("Running me!")
+
     link_libraries(${Boost_LIBRARIES} jsoncpp)
   endif()
 
-  link_libraries(${ORTHANC_FRAMEWORK_LIBRARIES} iostreams)
+  link_libraries(${ORTHANC_FRAMEWORK_LIBRARIES})
   
   set(USE_SYSTEM_GOOGLE_TEST ON CACHE BOOL "Use the system version of Google Test")
   set(USE_GOOGLE_TEST_DEBIAN_PACKAGE OFF CACHE BOOL "Use the sources of Google Test shipped with libgtest-dev (Debian only)")
@@ -81,6 +81,7 @@ else()
   include_directories(${ORTHANC_FRAMEWORK_ROOT})
 endif()
 
+link_libraries(Boost::iostreams)
 
 include(${CMAKE_SOURCE_DIR}/Resources/Orthanc/Plugins/OrthancPluginsExports.cmake)
 
