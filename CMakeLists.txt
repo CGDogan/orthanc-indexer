@@ -60,7 +60,7 @@ if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
     link_libraries(${Boost_LIBRARIES} jsoncpp)
   endif()
 
-  link_libraries(${ORTHANC_FRAMEWORK_LIBRARIES})
+  link_libraries(${ORTHANC_FRAMEWORK_LIBRARIES} iostreams)
   
   set(USE_SYSTEM_GOOGLE_TEST ON CACHE BOOL "Use the system version of Google Test")
   set(USE_GOOGLE_TEST_DEBIAN_PACKAGE OFF CACHE BOOL "Use the sources of Google Test shipped with libgtest-dev (Debian only)")
