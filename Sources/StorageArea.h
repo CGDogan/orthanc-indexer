@@ -43,9 +43,6 @@ public:
               const void *content,
               int64_t size);
 
-  void ReadWhole(std::string& target,
-                 const std::string& uuid);
-
   void ReadWhole(OrthancPluginMemoryBuffer64 *target,
                  const std::string& uuid);
 
