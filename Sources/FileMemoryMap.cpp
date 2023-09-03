@@ -69,8 +69,8 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
       }
       high = &non_mapped_data[length];
     }
-    non_mapped_data = std::string(low, high);
     data_length = high - low;
+    non_mapped_data = std::string(non_mapped_data, data_length);
   }
 }
 
@@ -82,7 +82,7 @@ char *FileMemoryMap::data()
   }
   else
   {
-    __builtin_printf("accessing  ... %d", on_mapped_data[1]);
+    __builtin_printf("accessing  ... %d", non_mapped_data[1]);
     return const_cast<char*>(&non_mapped_data[0]);
   }
 }
