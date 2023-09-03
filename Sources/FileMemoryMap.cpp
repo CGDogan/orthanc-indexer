@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "../Resources/Orthanc/Plugins/OrthancPluginCppWrapper.h"
+#include <SystemToolbox.h>
 
 int FileMemoryMap::alignment = boost::iostreams::mapped_file::alignment();
 
@@ -32,8 +33,8 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
   params.flags = boost::iostreams::mapped_file::priv;
 
   // offset must be a multiple of alignment.
-  // reserve_for_padding_offset in range [0, aligment)
-  reserve_for_padding_offset = (alignment - (offset % aligment)) % alignment;
+  // reserve_for_padding_offset in range [0, alignment)
+  reserve_for_padding_offset = (alignment - (offset % alignment)) % alignment;
   params.offset = offset - reserve_for_padding_offset;
   params.length = length + reserve_for_padding_offset;
 
