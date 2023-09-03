@@ -57,7 +57,7 @@ if (ORTHANC_FRAMEWORK_SOURCE STREQUAL "system")
       message(FATAL_ERROR "Unable to locate Boost on this system")
     endif()
     
-    link_libraries(${Boost_LIBRARIES} jsoncpp Boost::iostreams)
+    link_libraries(${Boost_LIBRARIES} jsoncpp)
   endif()
 
   link_libraries(${ORTHANC_FRAMEWORK_LIBRARIES})
