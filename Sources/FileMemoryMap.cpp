@@ -61,7 +61,7 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
         // but the reader should use readable_length() to verify
         length = non_mapped_data.size();
       }
-      char *high = &non_mapped_data[length];
+      high = &non_mapped_data[length];
     }
     non_mapped_data = std::string(low, high);
     data_length = high - low;
@@ -80,7 +80,7 @@ char *FileMemoryMap::data()
   }
 }
 
-uintmax_t readable_length()
+uintmax_t FileMemoryMap::readable_length()
 {
   return data_length;
 }
