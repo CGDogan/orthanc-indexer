@@ -77,7 +77,7 @@ char *FileMemoryMap::data()
 {
   if (using_mapping)
   {
-    return &mapped_data.data()[reserve_for_padding_offset];
+    return const_cast<char*>(&mapped_data.data()[reserve_for_padding_offset]);
   }
   else
   {
