@@ -41,6 +41,6 @@ private:
   uintmax_t data_length;
 
   bool using_mapping;
-  boost::iostreams::mapped_file_sink mapped_data;
+  boost::iostreams::mapped_file_source mapped_data;
   std::string non_mapped_data;
 };
