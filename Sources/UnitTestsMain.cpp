@@ -39,7 +39,7 @@ TEST(StorageArea, Basic)
   ASSERT_TRUE(Orthanc::SystemToolbox::IsRegularFile(area.GetPath(uuid)));
 
   OrthancPluginMemoryBuffer64 s;
-  area.ReadWhole(s, uuid);
+  area.ReadWhole(&s, uuid);
   ASSERT_EQ(5u, s.size);
   ASSERT_EQ("Hello", s.data);
 
