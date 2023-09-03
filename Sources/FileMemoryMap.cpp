@@ -81,7 +81,7 @@ char *FileMemoryMap::data()
   }
   else
   {
-    return &non_mapped_data[0];
+    return const_cast<char*>(&non_mapped_data[0]);
   }
 }
 
