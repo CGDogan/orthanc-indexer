@@ -34,13 +34,19 @@ TEST(StorageArea, Basic)
   ASSERT_TRUE(Orthanc::Toolbox::IsUuid(uuid));
 
   StorageArea area("StorageAreaTests");
-  
+__builtin_printf("download\n");
   area.Create(uuid, "Hello", 5);
+  __builtin_printf("download\n");
+
   ASSERT_TRUE(Orthanc::SystemToolbox::IsRegularFile(area.GetPath(uuid)));
 
   OrthancPluginMemoryBuffer64 s;
   area.ReadWhole(&s, uuid);
+  __builtin_printf("%s\n", __LINE__);
+
   ASSERT_EQ(5u, s.size);
+  __builtin_printf("%s\n", __LINE__);
+
   ASSERT_EQ("Hello", s.data);
 
   char data[10];
@@ -49,35 +55,53 @@ TEST(StorageArea, Basic)
 
   buffer.size = 1;
   area.ReadRange(&buffer, uuid, 0);  ASSERT_EQ('H', data[0]);
+  __builtin_printf("%s\n", __LINE__);
+
   area.ReadRange(&buffer, uuid, 4);  ASSERT_EQ('o', data[0]);
+
   ASSERT_THROW(area.ReadRange(&buffer, uuid, 5), Orthanc::OrthancException);
-  
+  __builtin_printf("%s\n", __LINE__);
+
   buffer.size = 2;
   area.ReadRange(&buffer, uuid, 0);  ASSERT_EQ('H', data[0]);  ASSERT_EQ('e', data[1]);
   area.ReadRange(&buffer, uuid, 1);  ASSERT_EQ('e', data[0]);  ASSERT_EQ('l', data[1]);
   area.ReadRange(&buffer, uuid, 2);  ASSERT_EQ('l', data[0]);  ASSERT_EQ('l', data[1]);
   area.ReadRange(&buffer, uuid, 3);  ASSERT_EQ('l', data[0]);  ASSERT_EQ('o', data[1]);
+  __builtin_printf("%s\n", __LINE__);
+
   ASSERT_THROW(area.ReadRange(&buffer, uuid, 4), Orthanc::OrthancException);
-  
+  __builtin_printf("%s\n", __LINE__);
+
   buffer.size = 3;
   area.ReadRange(&buffer, uuid, 0);  ASSERT_EQ('H', data[0]);  ASSERT_EQ('e', data[1]);  ASSERT_EQ('l', data[2]);
+  __builtin_printf("%s\n", __LINE__);
+
   area.ReadRange(&buffer, uuid, 1);  ASSERT_EQ('e', data[0]);  ASSERT_EQ('l', data[1]);  ASSERT_EQ('l', data[2]);
   area.ReadRange(&buffer, uuid, 2);  ASSERT_EQ('l', data[0]);  ASSERT_EQ('l', data[1]);  ASSERT_EQ('o', data[2]);
   ASSERT_THROW(area.ReadRange(&buffer, uuid, 3), Orthanc::OrthancException);
-  
+  __builtin_printf("%s\n", __LINE__);
+
   buffer.size = 5;
   area.ReadRange(&buffer, uuid, 0);
   ASSERT_EQ('H', data[0]);
+  __builtin_printf("%s\n", __LINE__);
+
   ASSERT_EQ('e', data[1]);
   ASSERT_EQ('l', data[2]);
   ASSERT_EQ('l', data[3]);
   ASSERT_EQ('o', data[4]);
+  __builtin_printf("%s\n", __LINE__);
+
   ASSERT_THROW(area.ReadRange(&buffer, uuid, 1), Orthanc::OrthancException);
-  
+  __builtin_printf("%s\n", __LINE__);
+
   area.RemoveAttachment(uuid);
   ASSERT_FALSE(Orthanc::SystemToolbox::IsRegularFile(area.GetPath(uuid)));
+  __builtin_printf("%s\n", __LINE__);
 
   ASSERT_THROW(area.ReadWhole(&buffer, uuid), Orthanc::OrthancException);
+  __builtin_printf("%s\n", __LINE__);
+
   ASSERT_THROW(area.ReadRange(&buffer, uuid, 0), Orthanc::OrthancException);
 }
 
