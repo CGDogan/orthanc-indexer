@@ -45,6 +45,10 @@ set(ORTHANC_FRAMEWORK_STATIC OFF CACHE BOOL "If linking against the Orthanc fram
 mark_as_advanced(ORTHANC_FRAMEWORK_STATIC)
 
 
+# Plugin parameters
+set(USE_DEEP_STORAGE_DIRECTORY ON BOOL "For filesystem efficiency, arrange the storage directory in 3 layers instead of 1")
+
+
 # Download and setup the Orthanc framework
 include(${CMAKE_SOURCE_DIR}/Resources/Orthanc/CMake/DownloadOrthancFramework.cmake)
 
@@ -95,6 +99,11 @@ else ()
   endif()
 endif()
 
+if (USE_DEEP_STORAGE_DIRECTORY)
+  add_definitions(
+  -DUSE_DEEP_STORAGE_DIRECTORY=1
+  )
+endif()
 
 add_definitions(
   -DHAS_ORTHANC_EXCEPTION=1

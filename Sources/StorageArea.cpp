@@ -40,8 +40,10 @@ static boost::filesystem::path GetPathInternal(const std::string& root,
     assert(!root.empty());
       
     boost::filesystem::path path = root;
+#if defined(USE_DEEP_STORAGE_DIRECTORY) && (USE_DEEP_STORAGE_DIRECTORY != 0)
     path /= std::string(&uuid[0], &uuid[2]);
     path /= std::string(&uuid[2], &uuid[4]);
+#endif
     path /= uuid;
 
     path.make_preferred();
