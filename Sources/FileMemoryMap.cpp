@@ -35,7 +35,7 @@ int FileMemoryMap::alignment = boost::iostreams::mapped_file::alignment();
 // 2) offset zero or positive, length 0 (deduce length)
 // 3) file not readable at all: throws OrthancException
 FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uintmax_t length)
-{__builtin_fprintf(stderr, "starting constructor\n");
+{
   uintmax_t file_size = Orthanc::SystemToolbox::GetFileSize(location);
 
   // Handle full and partial overflow cases
@@ -71,7 +71,6 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
 
   try
   {
-    throw "";
     mapped_data.open(params);
 
     // Success: use Boost mapping
@@ -79,17 +78,14 @@ FileMemoryMap::FileMemoryMap(const std::string& location, uintmax_t offset, uint
     data_start = &mapped_data.data()[reserve_for_padding_offset];
     data_length = length;
   }
-  catch (...)
+  catch (const boost::exception &e)
   {
-    //LOG(INFO) << "Failed mapping file, will read conventionally. Exception: " << boost::diagnostic_information(e);
+    LOG(INFO) << "Failed mapping file, will read conventionally. Exception: " << boost::diagnostic_information(e);
     using_mapping = false;
-  __builtin_fprintf(stderr, "length: %ld\n", length);
-
     Orthanc::SystemToolbox::ReadFileRange(non_mapped_data, location, offset, offset + length, true);
     data_start = const_cast<char *>(&non_mapped_data[0]);
     data_length = length;
   }
-  __builtin_fprintf(stderr, "ending constructor\n");
 }
 
 char *FileMemoryMap::data()
