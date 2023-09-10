@@ -168,9 +168,11 @@ static void LookupDeletedFiles()
       {
         const std::string& path = it->first;
         const std::string& instanceId = it->second;
-
+__builtin_printf("executedelete path %s", path.c_str());
         if (database_.RemoveFile(path))
         {
+          __builtin_printf("executedelete rest\n");
+
           OrthancPlugins::RestApiDelete("/instances/" + instanceId, false);      
         }
       }
@@ -291,11 +293,14 @@ static OrthancPluginErrorCode StorageCreate(const char *uuid,
         ComputeInstanceId(instanceId, content, size) &&
         database_.AddAttachment(uuid, instanceId))
     {
+      __builtin_printf("StorageCreate br1 %s\n", uuid);
       // This attachment corresponds to an external DICOM file that is
       // stored in one of the indexed folders, only store a link to it
     }
     else
     {
+      __builtin_printf("StorageCreate br2 %s\n", uuid);
+
       // This attachment must be stored in the internal storage area
       storageArea_->Create(uuid, content, size);
     }
@@ -393,10 +398,13 @@ static OrthancPluginErrorCode StorageRemove(const char *uuid,
     std::string externalPath;
     if (LookupExternalDicom(externalPath, uuid, type))
     {
+      __builtin_printf("StorageRemove br1 %s\n", uuid);
       database_.RemoveAttachment(uuid);
     }
     else
     {
+      __builtin_printf("StorageRemove br2 %s\n", uuid);
+
       database_.RemoveAttachment(uuid);
       storageArea_->RemoveAttachment(uuid);
     }

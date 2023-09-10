@@ -113,7 +113,7 @@ void StorageArea::Create(const std::string& uuid,
                          int64_t size)
 {
   boost::filesystem::path path = GetPathInternal(root_, uuid);
-
+__builtin_printf("storagearea::create %s\n", path.string().c_str());
   if (boost::filesystem::exists(path.parent_path()))
   {
     if (!boost::filesystem::is_directory(path.parent_path()))
@@ -151,7 +151,8 @@ void StorageArea::ReadRange(OrthancPluginMemoryBuffer64 *target,
 void StorageArea::RemoveAttachment(const std::string& uuid)
 {
   boost::filesystem::path path = GetPathInternal(root_, uuid);
-      
+      __builtin_printf("storagearea::removeattachment %s\n", path.string().c_str());
+
   try
   {
     boost::system::error_code err;
