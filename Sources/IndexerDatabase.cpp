@@ -234,6 +234,31 @@ void IndexerDatabase::Apply(IFileVisitor& visitor)
 }
 
 
+bool IndexerDatabase::CountTimesAttached(int64_t &t,
+                                        const std::string& instanceId)
+{
+  boost::mutex::scoped_lock lock(mutex_);
+    
+  Orthanc::SQLite::Transaction transaction(db_);
+  transaction.Begin();
+
+  {
+    Orthanc::SQLite::Statement statement(db_, SQLITE_FROM_HERE,
+                                         "SELECT COUNT(*) FROM Attachments WHERE instanceId=?");
+    statement.BindString(0, instanceId);
+
+    if (!statement.Step())
+    {
+      t = 0;
+    } else {
+      t = statement.ColumnInt64(0);
+    }
+  }
+  transaction.Commit();
+  return true;
+}
+
+
 bool IndexerDatabase::AddAttachment(const std::string& uuid,
                                     const std::string& instanceId)
 {

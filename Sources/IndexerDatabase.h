@@ -67,6 +67,9 @@ public:
 
   void OpenInMemory();  // For unit tests
 
+  bool CountTimesAttached(int64_t &t,
+                          const std::string &instanceId);
+
   FileStatus LookupFile(std::string& oldInstanceId,
                         const std::string& path,
                         const std::time_t time,
