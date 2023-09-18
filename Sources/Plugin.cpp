@@ -322,6 +322,8 @@ static OrthancPluginErrorCode StorageCreate(const char *uuid,
       // unlike the original plugin, the branch for files found through scanning
       // will run even for files we saved after receiving.
 
+      __builtin_fprintf(stderr, "Check race condition: entered branch\n");
+
       boost::filesystem::path dicom = realStoragePath;
       std::string subdir_name = folder_name((const char *) content, size);
       if (subdir_name != "")
@@ -331,11 +333,44 @@ static OrthancPluginErrorCode StorageCreate(const char *uuid,
       dicom /= std::string(uuid) + ".dcm";
       storageArea_->Create(uuid, content, size, &dicom);
 
-      // Pretend to have found it during a scan
-      database_.AddDicomInstance(dicom.string(),
-        boost::filesystem::last_write_time(dicom),
+      // Metadata for saving to database
+      std::time_t write_time = boost::filesystem::last_write_time(dicom);
+      std::string filepath_string = dicom.string();
+
+      // Fix race condition
+      // Orthanc has a quirk to sometimes call StorageCreate twice for new files
+      // then StorageRemove the extra one.
+      // Because the two StorageCreate calls are too close, both threads
+      // fail to find the new file in our indexer database
+      // so make new file and save it, resulting in two copies on our filesystem.
+      // Against this, after saving the file (which is an expensive operation),
+      // check again that it isn't in the database. If in, undo. If not, save.
+      // Without this code, Two of "Check race condition: entered branch"
+      // run before "Check race condition: changed branch".
+      // A mutex is not necessary as the worst case (which is not too bad:
+      // having a duplicate, unused file on our FS) is now very unlikely.
+      if (database_.AddAttachment(uuid, instanceId)) {
+        // This is the delayed thread. Undo the new created file and return;
+        try
+        {
+          boost::filesystem::remove(dicom);
+        }
+        catch (...)
+        {
+        }
+        return OrthancPluginErrorCode_Success;
+      }
+      // This thread indeed needs to save it
+
+      // Pretend to have found it during a scan, to keep the caMic-compatible filepath in our database
+      // database_.AddDicomInstance is designed for files found by the indexing thread
+      // as it saves the filepath
+      database_.AddDicomInstance(filepath_string,
+        write_time,
         size,
         instanceId);
+      __builtin_fprintf(stderr, "Check race condition: changed branch\n");
+
       // Pretend to have received it now from processing from Orthanc
       database_.AddAttachment(uuid, instanceId);
       // Notify caMicroscope of the newly received DICOM file
