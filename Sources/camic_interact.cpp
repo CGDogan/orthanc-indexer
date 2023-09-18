@@ -9,7 +9,7 @@ std::string camic_notifier::origin;
 
 // Change to 1 for debugging
 #ifndef CURL_VERBOSE
-#define CURL_VERBOSE 1
+#define CURL_VERBOSE 0
 #endif
 
 // For connection verification: Counts the number of bytes read.

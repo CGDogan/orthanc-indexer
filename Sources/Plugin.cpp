@@ -170,10 +170,8 @@ static void LookupDeletedFiles()
       {
         const std::string& path = it->first;
         const std::string& instanceId = it->second;
-__builtin_printf("executedelete path %s", path.c_str());
         if (database_.RemoveFile(path))
         {
-          __builtin_printf("executedelete rest\n");
 
           OrthancPlugins::RestApiDelete("/instances/" + instanceId, false);      
         }
@@ -309,7 +307,6 @@ static OrthancPluginErrorCode StorageCreate(const char *uuid,
       // Register it in the database, linking it to the file we encountered,
       // and don't write it to the disk since that would be a duplicate.
 
-      __builtin_printf("StorageCreate br1 %s\n", uuid);
     }
     else
     {
@@ -322,7 +319,7 @@ static OrthancPluginErrorCode StorageCreate(const char *uuid,
       // unlike the original plugin, the branch for files found through scanning
       // will run even for files we saved after receiving.
 
-      __builtin_fprintf(stderr, "Check race condition: entered branch\n");
+      // __builtin_fprintf(stderr, "Check race condition: entered branch\n");
 
       boost::filesystem::path dicom = realStoragePath;
       std::string subdir_name = folder_name((const char *) content, size);
@@ -369,14 +366,13 @@ static OrthancPluginErrorCode StorageCreate(const char *uuid,
         write_time,
         size,
         instanceId);
-      __builtin_fprintf(stderr, "Check race condition: changed branch\n");
+      // __builtin_fprintf(stderr, "Check race condition: changed branch\n");
 
       // Pretend to have received it now from processing from Orthanc
       database_.AddAttachment(uuid, instanceId);
       // Notify caMicroscope of the newly received DICOM file
       camic_notifier::notify("/fs/addedFile?filepath=" + camic_notifier::escape(dicom.lexically_relative(realStoragePath).string()));
 
-      __builtin_printf("StorageCreate br2 %s\n", uuid);
     }
     
     return OrthancPluginErrorCode_Success;
@@ -472,7 +468,6 @@ static OrthancPluginErrorCode StorageRemove(const char *uuid,
     std::string externalPath;
     if (LookupExternalDicom(externalPath, uuid, type))
     {
-      __builtin_printf("StorageRemove br1 %s\n", uuid);
       database_.RemoveAttachment(uuid);
 
       // Deleting from Orthanc UI/API should really delete the file or just make it invisible
@@ -503,7 +498,6 @@ static OrthancPluginErrorCode StorageRemove(const char *uuid,
     }
     else
     {
-      __builtin_printf("StorageRemove br2 %s\n", uuid);
 
       database_.RemoveAttachment(uuid);
       storageArea_->RemoveAttachment(uuid);
