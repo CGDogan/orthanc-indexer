@@ -110,9 +110,12 @@ StorageArea::StorageArea(const std::string& root) :
   
 void StorageArea::Create(const std::string& uuid,
                          const void *content,
-                         int64_t size)
+                         int64_t size,
+                         boost::filesystem::path* custom_path)
 {
-  boost::filesystem::path path = GetPathInternal(root_, uuid);
+  boost::filesystem::path path = custom_path
+    ? *custom_path
+    : GetPathInternal(root_, uuid);
 __builtin_printf("storagearea::create %s\n", path.string().c_str());
   if (boost::filesystem::exists(path.parent_path()))
   {

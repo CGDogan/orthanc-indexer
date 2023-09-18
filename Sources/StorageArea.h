@@ -22,6 +22,7 @@
 #include <orthanc/OrthancCPlugin.h>
 
 #include <boost/noncopyable.hpp>
+#include <boost/filesystem.hpp>
 #include <string>
 
 class StorageArea : public boost::noncopyable
@@ -41,7 +42,8 @@ public:
   
   void Create(const std::string& uuid,
               const void *content,
-              int64_t size);
+              int64_t size,
+              boost::filesystem::path *custom_path = NULL);
 
   void ReadWhole(OrthancPluginMemoryBuffer64 *target,
                  const std::string& uuid);
