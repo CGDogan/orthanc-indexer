@@ -474,6 +474,32 @@ static OrthancPluginErrorCode StorageRemove(const char *uuid,
     {
       __builtin_printf("StorageRemove br1 %s\n", uuid);
       database_.RemoveAttachment(uuid);
+
+      // Deleting from Orthanc UI/API should really delete the file or just make it invisible
+      // from Orthanc until restart? If the latter, please comment out the next few lines until end of "if" true branch:
+
+      // Count the number of times a file is recorded as attachment (a file registered with how many UUIDs)
+      std::string instanceId;
+      database_.LookupFile(instanceId, externalPath, 0, 0);
+      int64_t times;
+      database_.CountTimesAttached(times, instanceId);
+
+      if (times == 0) {
+        // Delete the file
+        boost::filesystem::path boostPath(externalPath);
+        if (boost::filesystem::exists(boostPath))
+        {
+          try {
+            // Small race condition here for the next two lines, they should execute as one statement
+            boost::filesystem::remove(boostPath);
+            database_.RemoveFile(externalPath);
+          } catch(...) {
+            fprintf(stderr, "file removal failed for %s\n", externalPath.c_str());
+          }
+        }
+        camic_notifier::notify("/fs/deletedFile?filepath=" + camic_notifier::escape(boostPath.lexically_relative(realStoragePath).string()));
+        database_.RemoveFile(externalPath);
+      }
     }
     else
     {
