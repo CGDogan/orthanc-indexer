@@ -38,6 +38,7 @@ static std::list<std::string>        folders_;
 static IndexerDatabase               database_;
 static std::unique_ptr<StorageArea>  storageArea_;
 static unsigned int                  intervalSeconds_;
+static boost::filesystem::path       realStoragePath;
 
 
 static bool ComputeInstanceId(std::string& instanceId,
@@ -471,6 +472,14 @@ extern "C"
       return -1;
     }
 
+    // CaMicroscope check: Require 1.9.1 so that we don't need to deal with JSONs
+    // https://hg.orthanc-server.com/orthanc/file/Orthanc-1.9.1/NEWS
+    if (OrthancPluginCheckVersionAdvanced(context, 1, 9, 1) == 0)
+    {
+      fprintf(stderr, "Orthanc minimum 1.9.1 required\n");
+      return -1;
+    }
+
     OrthancPluginSetDescription(context, "Synchronize Orthanc with directories containing DICOM files.");
 
     OrthancPlugins::OrthancConfiguration configuration;
@@ -489,6 +498,8 @@ extern "C"
         static const char* const ORTHANC_STORAGE = "OrthancStorage";
         static const char* const STORAGE_DIRECTORY = "StorageDirectory";
         static const char* const INTERVAL = "Interval";
+        static const char *const STORE_DICOM = "StoreDICOM";
+        static const char *const STORAGE_COMPRESSION = "StorageCompression";
 
         intervalSeconds_ = indexer.GetUnsignedIntegerValue(INTERVAL, 10 /* 10 seconds by default */);
         
@@ -521,7 +532,34 @@ extern "C"
         LOG(WARNING) << "Path to the database of the Indexer plugin: " << path;
         database_.Open(path);
 
-        storageArea_.reset(new StorageArea(configuration.GetStringValue(STORAGE_DIRECTORY, ORTHANC_STORAGE)));
+        // caMicroscope: the "root" of the storageArea_ is now used only for non-DICOM files,
+        // which are probably cache files, if any. To destroy them when the main Orthanc
+        // database is removed, set its root now to Orthanc's index directory.
+        // Please also see the comment in StorageCreate
+        storageArea_.reset(new StorageArea(configuration.GetStringValue(INDEX_DIRECTORY, ORTHANC_STORAGE)));
+
+        realStoragePath = boost::filesystem::path(configuration.GetStringValue(STORAGE_DIRECTORY, ORTHANC_STORAGE));
+
+        if (!boost::filesystem::exists(realStoragePath))
+        {
+          fprintf(stderr, "StorageDirectory for Orthanc was configured to an inextistant path %s?\n", STORAGE_DIRECTORY);
+          return -1;
+        }
+
+        // caMicroscope checks:
+        bool indexOnly = !configuration.GetBooleanValue(STORE_DICOM, true);
+        if (indexOnly)
+        {
+          fprintf(stderr, "StoreDICOM=false not supported by caMicroscope\n");
+          return -1;
+        }
+
+        bool compress = configuration.GetBooleanValue(STORAGE_COMPRESSION, false);
+        if (compress)
+        {
+          fprintf(stderr, "StorageCompression=true not supported by caMicroscope\n");
+          return -1;
+        }
       }
       catch (Orthanc::OrthancException& e)
       {
