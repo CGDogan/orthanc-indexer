@@ -33,6 +33,7 @@
 #include <boost/thread.hpp>
 #include <stack>
 
+#include "camic_interact.h"
 
 static std::list<std::string>        folders_;
 static IndexerDatabase               database_;
@@ -290,20 +291,57 @@ static OrthancPluginErrorCode StorageCreate(const char *uuid,
   try
   {
     std::string instanceId;
-    if (type == OrthancPluginContentType_Dicom &&
-        ComputeInstanceId(instanceId, content, size) &&
-        database_.AddAttachment(uuid, instanceId))
+    if (type != OrthancPluginContentType_Dicom ||
+      !ComputeInstanceId(instanceId, content, size))
     {
+      // caMicroscope plugin: This must be an Orthanc cache file.
+      // Keep it alive with the main Orthanc's database, no sooner, no earlier.
+      // So restarting Orthanc should preserve it but rebuilding Docker mustn't.
+      // Hence this must go in the same folder as the database, the index folder of Orthanc
+      // (which is not the same as "a folder to be indexed by the indexer plugin")
+      storageArea_->Create(uuid, content, size);
+      return OrthancPluginErrorCode_Success;
+    }
+
+    if (database_.AddAttachment(uuid, instanceId))
+    {
+      // This StorageCreate call is from scanning a folder
+      // Register it in the database, linking it to the file we encountered,
+      // and don't write it to the disk since that would be a duplicate.
+
       __builtin_printf("StorageCreate br1 %s\n", uuid);
-      // This attachment corresponds to an external DICOM file that is
-      // stored in one of the indexed folders, only store a link to it
     }
     else
     {
-      __builtin_printf("StorageCreate br2 %s\n", uuid);
+      // This call is from a new dicom received by the dicom server/gui
+      // Normally we would save it by UUID only, but instead:
+      // calculate its subfolder name (a hash), save it there.
+      // Add it to "Files" just like we do for files we discover by scanning.
+      // *Then* call AddAttachment. This time, we know what file in the database to link it with!
+      // This means that for the three other storage functions registered,
+      // unlike the original plugin, the branch for files found through scanning
+      // will run even for files we saved after receiving.
 
-      // This attachment must be stored in the internal storage area
-      storageArea_->Create(uuid, content, size);
+      boost::filesystem::path dicom = realStoragePath;
+      std::string subdir_name = folder_name((const char *) content, size);
+      if (subdir_name != "")
+      {
+        dicom /= subdir_name;
+      }
+      dicom /= std::string(uuid) + ".dcm";
+      storageArea_->Create(uuid, content, size, &dicom);
+
+      // Pretend to have found it during a scan
+      database_.AddDicomInstance(dicom.string(),
+        boost::filesystem::last_write_time(dicom),
+        size,
+        instanceId);
+      // Pretend to have received it now from processing from Orthanc
+      database_.AddAttachment(uuid, instanceId);
+      // Notify caMicroscope of the newly received DICOM file
+      camic_notifier::notify("/fs/addedFile?filepath=" + camic_notifier::escape(dicom.lexically_relative(realStoragePath).string()));
+
+      __builtin_printf("StorageCreate br2 %s\n", uuid);
     }
     
     return OrthancPluginErrorCode_Success;
